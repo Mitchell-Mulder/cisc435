@@ -1,14 +1,14 @@
-# Echo server program
 import socket
 import json
 import os
 import threading
-import time
 import random
+import datetime
 
 MAX_CONNECTIONS = 3
-HOST = ''                 # Symbolic name meaning all available interfaces
-PORT = 50007              # Arbitrary non-privileged port
+HOST = ''
+PORT = 50007
+HISTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "history.json")
 connectionsCounter = 0
 
 
@@ -37,9 +37,19 @@ def getMaxRequests(code):
 
 def clientThread(conn):
     global connectionsCounter
+
     clientInfo = createInfo()
     MAX_REQUESTS =  getMaxRequests(clientInfo["code"])
     print("code: {0}, max_requests:{1}".format(clientInfo["code"], MAX_REQUESTS))
+
+    with open(HISTORY, "r") as hist:
+        fileData = json.load(hist)
+
+    fileData[clientInfo["name"]] = []
+
+    with open(HISTORY, "w") as hist:
+        json.dump(fileData, hist)
+
     requestCounter = 0
     while True:
         data = conn.recv(1024)
@@ -52,6 +62,17 @@ def clientThread(conn):
         elif data in getCache():
             if requestCounter >= MAX_REQUESTS and MAX_REQUESTS != 0:
                 break
+
+            with open(HISTORY, "r") as hist:
+                fileData = json.load(hist)
+
+            now = datetime.datetime.now()
+            clientData = fileData[clientInfo["name"]]
+            clientData.append({"request": data, "datetime": now.strftime("%Y-%m-%dT%H:%M:%S")})
+
+            with open(HISTORY, "w") as hist:
+                json.dump(fileData, hist)
+
             response = data
             requestCounter += 1
         else:
@@ -62,6 +83,10 @@ def clientThread(conn):
 
 
 def main():
+    # Overwrite or create the history file
+    with open(HISTORY, "w") as hist:
+        json.dump({}, hist)
+
     global connectionsCounter
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST, PORT))
