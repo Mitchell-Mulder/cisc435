@@ -15,14 +15,19 @@ def createSocket():
 
 def main():
     os.makedirs(CACHE, exist_ok=True)
-    print("Enter list to list avaliable cache")
+    print(
+"""Usage:   list             # List the cached images names to query
+         <image-name>     # Downloads the cached image to cache folder
+         info             # Sends back client name, code, and number of maximum requests(0 for unlimited)
+         usage            # Query client usage if platinum user
+         exit             # Closes the socket connection""")
     s = createSocket()
     while True:
         command = input(">")
         if command == "exit":
             s.close()
             break
-        elif command == "list" or command == "usage":
+        elif command in ["list", "usage", "info"]:
             s.sendall(command.encode())
             response = recvResponse(s)
             if not response: break

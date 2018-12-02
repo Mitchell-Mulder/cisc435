@@ -25,7 +25,7 @@ def getCache():
 def createInfo():
     name = "client-{0}".format(random.randint(1,10000))
     code = random.randint(50,300)
-    return {"name": name, "code": code}
+    return {"name": name, "code": code, "MAX_REQUESTS": getMaxRequests(code)}
 
 
 def getMaxRequests(code):
@@ -43,12 +43,12 @@ def sendResponse(conn, response):
     conn.sendall(response)
 
 
-def clientThread(conn):
+def clientThread(conn, addr):
     global connectionsCounter
 
     clientInfo = createInfo()
-    MAX_REQUESTS =  getMaxRequests(clientInfo["code"])
-    print("code: {0}, max_requests:{1}".format(clientInfo["code"], MAX_REQUESTS))
+    MAX_REQUESTS =  clientInfo["MAX_REQUESTS"]
+    print(json.dumps(clientInfo))
 
     with open(HISTORY, "r") as hist:
         fileData = json.load(hist)
@@ -98,6 +98,7 @@ def clientThread(conn):
             response = response.encode()
         sendResponse(conn, response)
     connectionsCounter -= 1
+    print('Connection closed by', addr)
     conn.close()
 
 
@@ -118,7 +119,7 @@ def main():
             conn.close()
             continue
         print('Connected by', addr)
-        threading.Thread(target=clientThread, args=(conn,)).start()
+        threading.Thread(target=clientThread, args=(conn,addr)).start()
 
 
 if __name__ == "__main__":
