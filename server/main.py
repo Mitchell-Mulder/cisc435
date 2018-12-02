@@ -4,11 +4,13 @@ import os
 import threading
 import random
 import datetime
+import struct
 
 MAX_CONNECTIONS = 3
 HOST = ''
 PORT = 50007
 HISTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "history.json")
+CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache/")
 connectionsCounter = 0
 
 
@@ -35,6 +37,12 @@ def getMaxRequests(code):
         return 5
 
 
+def sendResponse(conn, response):
+    # Prefix each message with a header that specifies the length of the message
+    response = struct.pack('>I', len(response)) + response
+    conn.sendall(response)
+
+
 def clientThread(conn):
     global connectionsCounter
 
@@ -57,8 +65,10 @@ def clientThread(conn):
         data = data.decode()
         if data == "list":
             response = getCache()
+            response = json.dumps(response).encode()
         elif data == "info":
-            response = clientInfo
+            response = json.dumps(clientInfo)
+            response = response.encode()
         elif data in getCache():
             if requestCounter >= MAX_REQUESTS and MAX_REQUESTS != 0:
                 break
@@ -72,12 +82,19 @@ def clientThread(conn):
 
             with open(HISTORY, "w") as hist:
                 json.dump(fileData, hist)
+            
+            sendResponse(conn, "sending image".encode())
 
-            response = data
+            cacheFile = open("{0}/{1}".format(CACHE, data), "rb")
+            cacheBytes = cacheFile.read()
+            response = cacheBytes
+            cacheBytes.close()
+
             requestCounter += 1
         else:
             response = "invalid request"
-        conn.sendall(json.dumps(response).encode())
+            response = response.encode()
+        sendResponse(conn, response)
     connectionsCounter -= 1
     conn.close()
 
