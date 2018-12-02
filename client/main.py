@@ -22,7 +22,7 @@ def main():
         if command == "exit":
             s.close()
             break
-        elif command == "list":
+        elif command == "list" or command == "usage":
             s.sendall(command.encode())
             response = recvResponse(s)
             if not response: break
@@ -40,6 +40,7 @@ def main():
                     break
                 cacheFile.write(data)
                 cacheFile.close()
+                print("Image has been downlaod to cache folder")
             else:
                 print(response.decode())
 

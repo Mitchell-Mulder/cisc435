@@ -67,8 +67,10 @@ def clientThread(conn):
             response = getCache()
             response = json.dumps(response).encode()
         elif data == "info":
-            response = json.dumps(clientInfo)
-            response = response.encode()
+            response = json.dumps(clientInfo).encode()
+        elif data == "usage" and MAX_REQUESTS == 0:
+            with open(HISTORY, "rb") as hist:
+                response = hist.read()
         elif data in getCache():
             if requestCounter >= MAX_REQUESTS and MAX_REQUESTS != 0:
                 break
@@ -88,7 +90,7 @@ def clientThread(conn):
             cacheFile = open("{0}/{1}".format(CACHE, data), "rb")
             cacheBytes = cacheFile.read()
             response = cacheBytes
-            cacheBytes.close()
+            cacheFile.close()
 
             requestCounter += 1
         else:
