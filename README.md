@@ -19,3 +19,6 @@ To run my project please use **Python 3.7.1**. Do not use Python 2.x or the proj
 * To run automated test run:
 
     `python -m unittest -v testClientServer.py`
+
+## Report
+* The report is located in root of the project folder named: `Mitchell-Mulder-CISC435-Project.pdf`
